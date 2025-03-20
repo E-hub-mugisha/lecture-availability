@@ -17,7 +17,7 @@
     </button>
 
     <!-- Availability Table -->
-    <table class="table table-striped">
+    <table id="dataTables" class="table table-striped">
         <thead>
             <tr>
                 <th>Day</th>

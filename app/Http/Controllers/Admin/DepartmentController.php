@@ -5,13 +5,15 @@ namespace App\Http\Controllers\Admin;
 use App\Models\Department;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\Lecture;
 
 class DepartmentController extends Controller
 {
     public function index()
     {
         $departments = Department::all();
-        return view('admin.departments.index', compact('departments'));
+        $lecturers = Lecture::all();
+        return view('admin.departments.index', compact('departments', 'lecturers'));
     }
 
     public function create()
@@ -52,7 +54,29 @@ class DepartmentController extends Controller
 
     public function destroy(Department $department)
     {
+        // Set department_id to null for all lecturers assigned to this department
+        Lecture::where('department_id', $department->id)->update(['department_id' => null]);
+
         $department->delete();
         return redirect()->route('admin.departments.index')->with('success', 'Department deleted successfully.');
+    }
+
+    public function assignLecturer(Request $request)
+    {
+        $request->validate([
+            'lecturer_id' => 'required|exists:lectures,id', // Use 'lecturers' instead of 'lectures'
+            'department_id' => 'required|exists:departments,id'
+        ]);
+
+        $lecturer = Lecture::where('id', $request->lecturer_id)->first(); // Use Lecturer model
+
+        if (!$lecturer) {
+            return redirect()->route('admin.departments.index')->with('error', 'Lecturer not found');
+        }
+
+        $lecturer->department_id = $request->department_id;
+        $lecturer->save();
+
+        return redirect()->route('admin.departments.index')->with('success', 'Lecturer assigned successfully');
     }
 }

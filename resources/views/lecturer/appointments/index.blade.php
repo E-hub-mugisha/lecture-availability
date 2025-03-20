@@ -12,7 +12,7 @@
         </div>
     @endif
 
-    <table class="table">
+    <table id="dataTables" class="table table-striped">
         <thead>
             <tr>
                 <th>#</th>
