@@ -94,4 +94,8 @@ class User extends Authenticatable
     {
         return $this->hasOne(Lecture::class);
     }
+    public function appointments()
+    {
+        return $this->hasMany(Appointment::class, 'student_id');
+    }
 }

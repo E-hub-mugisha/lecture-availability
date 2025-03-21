@@ -19,6 +19,7 @@ class Appointment extends Model
         'availability_id',
         'appointment_date',
         'status',
+        'time',
     ];
 
     /**
@@ -35,7 +36,7 @@ class Appointment extends Model
      */
     public function student()
     {
-        return $this->belongsTo(User::class, 'student_id');
+        return $this->belongsTo(Student::class, 'student_id');
     }
 
     /**

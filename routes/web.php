@@ -31,9 +31,13 @@ All Normal Users Routes List
 Route::middleware(['auth', 'user-access:students'])->group(function () {
     Route::get('/student/profile', [StudentController::class, 'edit'])->name('student.profile.edit');
     Route::post('/student/profile', [StudentController::class, 'update'])->name('student.profile.update');
-    Route::get('/student/appointment', [StudentController::class, 'studentAppointment'])->name('student.appointments.index');
+    Route::get('/student/lecture/available', [StudentController::class, 'lectureAvailable'])->name('student.lecture.available');
+    Route::get('/student/appointment/booking', [StudentController::class, 'appointment'])->name('student.appointments.index');
     Route::post('/student/appointment/booking', [StudentController::class, 'bookAppointment'])->name('student.appointments.book');
-    Route::get('/student/availability', [StudentController::class, 'availability'])->name('student.availability');
+    Route::delete('/student/appointment/{id}', [StudentController::class, 'destroyAppointment'])->name('student.appointments.destroy');
+    Route::put('/student/appointment/{id}/cancel', [StudentController::class, 'cancelAppointment'])->name('student.appointments.cancel');
+
+    Route::get('/student/availability', [StudentController::class, 'studentAvailablity'])->name('student.availability');
     Route::post('/student/availability', [StudentController::class, 'storeAvailability'])->name('student.availability.store');
     Route::delete('/student/availability/{id}', [StudentController::class, 'destroy'])->name('student.availabilityDelete');
     Route::get('/student/history', [StudentController::class, 'history'])->name('student.history');
@@ -63,7 +67,7 @@ Route::middleware(['auth', 'user-access:admin'])->group(function () {
     Route::get('/admin/lecturers/{lecture}/availability', [App\Http\Controllers\Admin\LectureController::class, 'availability'])->name('admin.lecturers.availability');
     Route::post('/admin/lecturers/{lecture}/availability', [App\Http\Controllers\Admin\LectureController::class, 'storeAvailability'])->name('admin.lecturers.availability.store');
     Route::delete('/admin/lecturers/{lecture}/availability/{id}', [App\Http\Controllers\Admin\LectureController::class, 'destroy'])->name('admin.lecturers.availabilityDelete');
-    
+
     Route::get('/admin/lecturers/appointments', [App\Http\Controllers\Admin\LectureController::class, 'appointments'])->name('admin.lecturers.appointments');
     Route::get('/admin/lecturers/{lecture}/appointments', [App\Http\Controllers\Admin\LectureController::class, 'lectureAppointments'])->name('admin.lecturerAppointments');
     Route::get('/admin/lecturers/{lecture}/students', [App\Http\Controllers\Admin\LectureController::class, 'students'])->name('admin.lecturers.students');
@@ -105,9 +109,14 @@ Route::middleware(['auth', 'user-access:lectures'])->group(function () {
     Route::get('/lecturer/appointments', [LectureController::class, 'appointment'])->name('lecturer.appointments');
     Route::delete('/lecturer/availability/{id}', [LectureController::class, 'destroy'])->name('lecturer.availabilityDelete');
     Route::get('lecturer/students', [LectureController::class, 'students'])->name('lecturer.students.index');
-    Route::post('lecturer/book/{student}', [LectureController::class, 'bookAppointment'])->name('lecturer.book');
+    Route::get('lecturer/students/all', [LectureController::class, 'allStudent'])->name('lecturer.students.all');
+    Route::post('lecturer/book/{student}', [LectureController::class, 'bookAppointment'])->name('lecturer.book.student');
     Route::get('/manager/home', [HomeController::class, 'managerHome'])->name('manager.home');
     Route::get('/lecturer/profile', [LectureController::class, 'show'])->name('lecturer.profile');
     Route::post('/lecturer/profile', [LectureController::class, 'updateLecture'])->name('lecturer.profile.update');
     Route::post('/lecturer/department', [LectureController::class, 'updateDepartment'])->name('lecturer.department.update');
+    Route::put('/lecturer/appointments/{id}/reschedule', [LectureController::class, 'reschedule'])->name('lecturer.appointments.reschedule');
+    Route::put('/lecturer/appointments/{id}/cancel', [LectureController::class, 'cancelAppointment'])->name('lecturer.appointments.cancel');
+    Route::put('/lecturer/appointments/approve/{id}', [LectureController::class, 'approveAppointment'])->name('lecturer.appointments.approve');
+    Route::put('/lecturer/appointments/request/{id}', [LectureController::class, 'requestAppointment'])->name('appointments.request');
 });

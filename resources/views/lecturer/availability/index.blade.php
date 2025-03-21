@@ -1,67 +1,76 @@
 @extends('layouts.app')
-
+@section('title', 'My Availability | Lecturer')
 @section('content')
-<div class="container">
-    <h2 class="mb-4">My Availability</h2>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>My Availability</h2>
+        <!-- Button to Open Modal -->
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#availabilityModal">
+            <i class="fas fa-plus"></i> Add Availability
+        </button>
+    </div>
 
     <!-- Success Message -->
     @if(session('success'))
-    <div class="alert alert-success">
-        {{ session('success') }}
-    </div>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
     @endif
 
-    <!-- Button to Open Modal -->
-    <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#availabilityModal">
-        Add Availability
-    </button>
-
     <!-- Availability Table -->
-    <table id="dataTables" class="table table-striped">
-        <thead>
-            <tr>
-                <th>Day</th>
-                <th>Date</th>
-                <th>Start Time</th>
-                <th>End Time</th>
-                <th>Status</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($availabilities as $availability)
-            <tr>
-                <td>{{ $availability->day }}</td>
-                <td>{{ $availability->date }}</td>
-                <td>{{ $availability->start_time }}</td>
-                <td>{{ $availability->end_time }}</td>
-                <td>
-                    @if($availability->status == 'available')
-                    <span class="badge bg-success">Available</span>
-                    @elseif($availability->status == 'break')
-                    <span class="badge bg-info">Break</span>
-                    @elseif($availability->status == 'lunch')
-                    <span class="badge bg-warning">Lunch</span>
-                    @elseif($availability->status == 'meeting')
-                    <span class="badge bg-primary">Meeting</span>
-                    @elseif($availability->status == 'training')
-                    <span class="badge bg-secondary">Training</span>
-                    @else
-                    <span class="badge bg-danger">Unavailable</span>
-                    @endif
-                </td>
-                <td>
-                    <!-- Delete Button -->
-                    <form action="{{ route('lecturer.availabilityDelete', $availability->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this availability?');">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                    </form>
-                </td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="dataTables" class="table table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Day</th>
+                            <th>Date</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($availabilities as $availability)
+                        <tr>
+                            <td>{{ $availability->day }}</td>
+                            <td>{{ \Carbon\Carbon::parse($availability->date)->format('l, F j, Y') }}</td>
+                            <td>{{ \Carbon\Carbon::parse($availability->start_time)->format('g:i A') }}</td>
+                            <td>{{ \Carbon\Carbon::parse($availability->end_time)->format('g:i A') }}</td>
+                            <td>
+                                <span class="badge 
+                                    @switch($availability->status)
+                                        @case('available') bg-success @break
+                                        @case('break') bg-info @break
+                                        @case('lunch') bg-warning @break
+                                        @case('meeting') bg-primary @break
+                                        @case('training') bg-secondary @break
+                                        @default bg-danger
+                                    @endswitch">
+                                    {{ ucfirst($availability->status) }}
+                                </span>
+                            </td>
+                            <td>
+                                <!-- Delete Button -->
+                                <form action="{{ route('lecturer.availabilityDelete', $availability->id) }}" method="POST"
+                                    onsubmit="return confirm('Are you sure you want to delete this availability?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm" data-bs-toggle="tooltip" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Modal for Adding Availability -->
@@ -70,65 +79,61 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="availabilityModalLabel">Add Availability</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <form method="POST" action="{{ route('lecturer.availability.store') }}">
                     @csrf
-
-                    <!-- Day Selection Field -->
                     <input type="hidden" name="lecturer_id" value="{{ Auth::user()->lecturer->id }}">
-                    <div class="mb-3">
 
-                        <label for="day" class="form-label">Day</label>
-                        <select class="form-control" id="day" name="day" required>
-                            <option value="">Select Day</option>
-                            <option value="Monday">Monday</option>
-                            <option value="Tuesday">Tuesday</option>
-                            <option value="Wednesday">Wednesday</option>
-                            <option value="Thursday">Thursday</option>
-                            <option value="Friday">Friday</option>
-                            <option value="Saturday">Saturday</option>
-                            <option value="Sunday">Sunday</option>
-                        </select>
-                    </div>
+                    <div class="row">
+                        <!-- Day Selection -->
+                        <div class="col-md-6 mb-3">
+                            <label for="day" class="form-label">Day</label>
+                            <select class="form-control" id="day" name="day" required>
+                                <option value="">Select Day</option>
+                                @foreach(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as $day)
+                                    <option value="{{ $day }}">{{ $day }}</option>
+                                @endforeach
+                            </select>
+                        </div>
 
-                    <!-- Date Field -->
-                    <div class="mb-3">
-                        <label for="date" class="form-label">Date</label>
-                        <input type="date" class="form-control" id="date" name="date" required>
-                    </div>
+                        <!-- Date Selection -->
+                        <div class="col-md-6 mb-3">
+                            <label for="date" class="form-label">Date</label>
+                            <input type="date" class="form-control" id="date" name="date" required min="{{ now()->format('Y-m-d') }}">
+                        </div>
 
-                    <!-- Start Time Field -->
-                    <div class="mb-3">
-                        <label for="start_time" class="form-label">Start Time</label>
-                        <input type="time" class="form-control" id="start_time" name="start_time" required>
-                    </div>
+                        <!-- Start Time -->
+                        <div class="col-md-6 mb-3">
+                            <label for="start_time" class="form-label">Start Time</label>
+                            <input type="time" class="form-control" id="start_time" name="start_time" required>
+                        </div>
 
-                    <!-- End Time Field -->
-                    <div class="mb-3">
-                        <label for="end_time" class="form-label">End Time</label>
-                        <input type="time" class="form-control" id="end_time" name="end_time" required>
-                    </div>
+                        <!-- End Time -->
+                        <div class="col-md-6 mb-3">
+                            <label for="end_time" class="form-label">End Time</label>
+                            <input type="time" class="form-control" id="end_time" name="end_time" required>
+                        </div>
 
-                    <!-- Status Field -->
-                    <div class="mb-3">
-                        <label for="status" class="form-label">Status</label>
-                        <select class="form-control" id="status" name="status" required>
-                            <option value="">Select Status</option>
-                            <option value="available">Available</option>
-                            <option value="unavailable">Unavailable</option>
-                            <option value="break">Break</option>
-                            <option value="lunch">Lunch</option>
-                            <option value="meeting">Meeting</option>
-                            <option value="training">Training</option>
-                        </select>
+                        <!-- Status Selection -->
+                        <div class="col-md-12 mb-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-control" id="status" name="status" required>
+                                <option value="">Select Status</option>
+                                @foreach(['available', 'unavailable', 'break', 'lunch', 'meeting', 'training'] as $status)
+                                    <option value="{{ $status }}">{{ ucfirst($status) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
 
                     <!-- Submit Button -->
-                    <button type="submit" class="btn btn-primary">Save</button>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
                 </form>
-
             </div>
         </div>
     </div>

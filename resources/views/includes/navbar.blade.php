@@ -62,6 +62,9 @@
                     <a class="nav-link" href="{{ route('lecturer.students.index') }}"><i class="fas fa-user-graduate"></i> Students</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="{{ route('lecturer.students.all') }}"><i class="fas fa-calendar"></i> All Student</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="{{ route('lecturer.appointments') }}"><i class="fas fa-book"></i> Appointments</a>
                 </li>
                 <li class="nav-item">
@@ -69,7 +72,10 @@
                 </li>
                 @elseif(Auth::user()->type == 'students')
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('student.appointments.index') }}"><i class="fas fa-calendar"></i> Appointments</a>
+                    <a class="nav-link" href="{{ route('student.lecture.available') }}"><i class="fas fa-calendar"></i> Lecture Available</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('student.appointments.index') }}"><i class="fas fa-calendar-check"></i> Student Appointments</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('student.availability') }}"><i class="fas fa-clock"></i> Student Availability</a>

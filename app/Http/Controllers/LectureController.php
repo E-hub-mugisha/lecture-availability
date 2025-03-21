@@ -17,7 +17,7 @@ class LectureController extends Controller
     public function index()
     {
         $lecturers = Lecture::where('user_id', Auth::id())->first();
-        $availabilities = LectureAvailability::where('lecturer_id', $lecturers->id )->get();
+        $availabilities = LectureAvailability::where('lecturer_id', $lecturers->id)->get();
         return view('lecturer.availability.index', compact('availabilities'));
     }
 
@@ -64,39 +64,50 @@ class LectureController extends Controller
     public function students()
     {
         // Fetch all students with their availabilities
-        $students = Student::with('availabilities')->get();
-        return view('lecturer.students.index', compact('students'));
+        $availabilities = StudentAvailability::all();
+        return view('lecturer.students.index', compact('availabilities'));
     }
     // Lecturer books an appointment
-    public function bookAppointment(Request $request, $studentId)
+    public function bookAppointment(Request $request, $student)
     {
         $request->validate([
             'availability_id' => 'required|exists:student_availabilities,id',
+            'student_id' => 'required|exists:students,id',
+            'student_availability_id' => 'required|exists:student_availabilities,id',
         ]);
 
         // Fetch the availability slot
-        $availability = StudentAvailability::findOrFail($request->availability_id);
+        $availability = StudentAvailability::findOrFail($request->student_availability_id);
 
         // Check if the slot is still available
         if ($availability->status == 'booked') {
             return back()->withErrors('This slot is already booked.');
         }
 
+        $lecture = Lecture::where('user_id', Auth::id())->first();
+
         // Create an appointment
-        Appointment::create([
-            'student_id' => $studentId,
-            'lecture_id' => auth()->user()->id,
-            'availability_id' => $availability->id,
-            'date' => $availability->date,
-            'time' => $availability->start_time,
-            'status' => 'pending',
-        ]);
+        $appointment = new Appointment();
+        $appointment->student_id = $student;
+        $appointment->lecturer_id = $lecture->id;
+        $appointment->availability_id = $availability->id;
+        $appointment->appointment_date = $availability->date;
+        $appointment->time = $availability->start_time;
+        $appointment->status = 'pending';
+        $appointment->save();
+
+        // update lecture availability status
+        $lectureAvailability = LectureAvailability::findOrFail($lecture->id);
+        $lectureAvailability->status = 'requested';
+        $lectureAvailability->availability_id = $appointment->id;
+        $lectureAvailability->update();
 
         // Update the availability status to 'booked'
-        $availability->status = 'booked';
-        $availability->save();
+        $availability->availability_id = $appointment->id;
+        $availability->status = 'request';
+        $availability->update();
 
-        return redirect()->route('students.index')->with('success', 'Appointment booked successfully!');
+        return redirect()->back()->with('success', 'Appointment requested successfully!');
     }
     public function show()
     {
@@ -122,5 +133,77 @@ class LectureController extends Controller
         ]);
 
         return redirect()->route('lecturer.profile')->with('success', 'Profile updated successfully!');
+    }
+    public function reschedule(Request $request, $id)
+    {
+        $request->validate([
+            'new_date' => 'required|date',
+            'new_time' => 'required',
+        ]);
+
+        $appointment = Appointment::findOrFail($id);
+        $appointment->update([
+            'appointment_date' => $request->new_date,
+            'time' => $request->new_time,
+            'status' => 'rescheduled',
+        ]);
+
+        return redirect()->back()->with('success', 'Appointment rescheduled successfully.');
+    }
+    public function approveAppointment($id)
+    {
+        $appointment = Appointment::findOrFail($id);
+        $appointment->update(['status' => 'approved']);
+
+        return redirect()->back()->with('success', 'Appointment approved successfully.');
+    }
+    public function cancelAppointment($id)
+    {
+        $appointment = Appointment::find($id);
+
+        if (!$appointment) {
+            return redirect()->back()->with('error', 'The appointment does not exist.');
+        }
+
+        $appointment->update(['status' => 'canceled']);
+
+        return redirect()->back()
+            ->with('success', 'Appointment cancelled successfully.');
+    }
+    public function requestAppointment($availabilityId)
+    {
+        // Find the availability record
+        $availability = StudentAvailability::findOrFail($availabilityId);
+
+        // Change the status of the availability to "requested"
+        $availability->status = 'request';
+        $availability->save(); // Use save() instead of update() to ensure it's saved properly
+
+        // Get the lecturer ID
+        $lecturerId = Lecture::where('user_id', Auth::user()->id)->first();
+
+        // Get the lecturer availability
+        $availability = LectureAvailability::findOrFail($availabilityId);
+
+        // Create a new appointment record in the appointments table with the "requested" status
+        $appointment = new Appointment(); // Assuming you have an Appointment model
+        $appointment->student_id = $availability->student_id; // Link to the student
+        $appointment->availability_id = $availability->id; // Link to the availability
+        $appointment->lecturer_id = $lecturerId->id; // Link to the lecturer
+        $appointment->status = 'requested'; // Appointment status
+        $appointment->save();
+
+        // Change the status of the availability to "requested"
+        $availability->status = 'request';
+        $availability->availability_id = $appointment->id; // Link the availability to the appointment
+        $availability->save(); // Use save() instead of update() to ensure it's saved properly
+
+        // Send a success message and redirect back
+        return redirect()->back()->with('success', 'Appointment request sent.');
+    }
+    public function allStudent()
+    {
+        $students = Student::all();
+        return view('lecturer.students.students', compact('students'));
     }
 }

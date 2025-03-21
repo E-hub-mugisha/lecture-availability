@@ -19,6 +19,11 @@ class Student extends Model
         return $this->hasMany(Appointment::class);
     }
 
+    public function availability()
+    {
+        return $this->hasMany(StudentAvailability::class);
+    }
+
     public function availabilities()
     {
         return $this->hasManyThrough(
